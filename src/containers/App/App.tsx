@@ -1,18 +1,10 @@
-import foodImg from '../assets/food.svg';
-import drinkImg from '../assets/drink.svg';
-import Menu from '../components/Menu/Menu';
-import Order from "../components/Order/Order";
-import {useState} from "react";
+import {useMemo, useState} from "react";
+import Menu from '../../components/Menu/Menu';
+import Order from "../../components/Order/Order";
+import foodImg from '../../assets/food.svg';
+import drinkImg from '../../assets/drink.svg';
+import {OrderInterface} from "../../types";
 
-
-interface Order {
-    id: number;
-    name: string;
-    price: number;
-    sum: number;
-    count: number;
-    show: boolean;
-}
 
 const App = () => {
     const MENU = [
@@ -30,10 +22,7 @@ const App = () => {
         };
     });
 
-    const [order, setOrder] = useState<Order[]>(orders);
-    const [show, setShow] = useState(false);
-
-    // let show = false;
+    const [order, setOrder] = useState<OrderInterface[]>(orders);
 
     const newOrder = (id: number) => {
         setOrder((prevState) => prevState.map(orderFood => {
@@ -48,8 +37,33 @@ const App = () => {
 
             return orderFood;
         }));
+    };
 
-        setShow(true);
+    const show = order.reduce((acc, value) => {
+        if (value.show) {
+            acc = true;
+        }
+
+        return acc;
+    }, false);
+
+
+    const deleteOrder = (id: number) => {
+        setOrder((prevState) => prevState.map((order) => {
+            if (order.id === id && order.count !== 0) {
+                return {...order, count: order.count - 1, sum: order.sum - order.price};
+            }
+
+            return order;
+        }));
+
+        setOrder((prevState) => prevState.map((order) => {
+            if (order.count === 0) {
+                return {...order, show: false};
+            }
+
+            return order;
+        }));
     };
 
     const bookMenu = MENU.map((food) => {
@@ -64,10 +78,6 @@ const App = () => {
         );
     });
 
-    const deleteOrder = (id: number) => {
-        console.log(id);
-    };
-
 
     const orderList = order.map((item) => {
         if (item.show) {
@@ -80,20 +90,24 @@ const App = () => {
                     deleteOrder={() => deleteOrder(item.id)}
                 />
             );
-        } else {
-            return false;
         }
     });
 
+    const total = useMemo(() => {
+        return order.reduce((acc, item) => {
+            return acc + item.sum;
+        }, 0);
+    }, [order]);
 
     return (
         <div className="container mt-5 px-5">
             <div className="d-flex justify-content-between">
-                <div className="border px-3">
+                <div className="border p-3">
                     <h3>Order</h3>
-                    {show ? orderList : 'Order is empty \n Add new food'}
+                    {show ? orderList : 'Order is empty. Add new food'}
+                    {show ? <div className="my-4">Total price {total}</div> : undefined}
                 </div>
-                <div className="border px-3">
+                <div className="border p-3 w-75">
                     <h3>Menu</h3>
                     <div className="d-flex flex-wrap gap-2">
                         {bookMenu}
